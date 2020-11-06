@@ -1,0 +1,43 @@
+name: "Setup GitFlow Environment"
+description: "Github Action to configure build environment with GitFlow in mind"
+defaults:
+  run:
+    shell: bash
+runs:
+  using: "composite"
+  steps: 
+    # Configure environment [custom]
+    - name: Using CUSTOM environment [${{ github.event.inputs.gcp_project_id }}]
+      if: github.event.inputs.gcp_project_id != ''
+      run: |
+        set -xeuo pipefail
+        echo "GCP_SA_KEY=${{ secrets.GCP_SA_KEY_DEV }}" >> ${GITHUB_ENV}
+        echo "GCP_PROJECT=${{ github.event.inputs.gcp_project_id }" >> ${GITHUB_ENV}
+        echo "CLOUD_ENV=custom" >> ${GITHUB_ENV}
+
+    # Configure environment [dev]
+    - name: Using DEV environment [${{ env.GCP_PROJECT_DEV }}]
+      if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+      run: |
+        set -xeuo pipefail
+        echo "GCP_SA_KEY=${{ secrets.GCP_SA_KEY_DEV }}" >> ${GITHUB_ENV}
+        echo "GCP_PROJECT=${GCP_PROJECT_DEV}" >> ${GITHUB_ENV}
+        echo "CLOUD_ENV=dev" >> ${GITHUB_ENV}
+
+    # Configure environment [stage]
+    - name: Using STAGE environment [${{ env.GCP_PROJECT_STAGE }}]
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: |
+        set -xeuo pipefail
+        echo "GCP_SA_KEY=${{ secrets.GCP_SA_KEY_DEV }}" >> ${GITHUB_ENV}
+        echo "GCP_PROJECT=${GCP_PROJECT_STAGE}" >> ${GITHUB_ENV}
+        echo "CLOUD_ENV=stage" >> ${GITHUB_ENV}
+
+    # Configure environment [prod]
+    - name: Using PROD environment [${{ env.GCP_PROJECT_PROD }}]
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      run: |
+        set -xeuo pipefail
+        echo "GCP_SA_KEY=${{ secrets.GCP_SA_KEY_PROD }}" >> ${GITHUB_ENV}
+        echo "GCP_PROJECT=${GCP_PROJECT_PROD}" >> ${GITHUB_ENV}
+        echo "CLOUD_ENV=prod" >> ${GITHUB_ENV}
